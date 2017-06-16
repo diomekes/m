@@ -17,21 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Dependencies:
-#  - mpv          Or any player you like: mplayer?
-#  - sentaku      Downloaded at runtime on demand
-#  - youtube-dl   Optional
-#
-# Test routine:
-#  - remove index-file and sentaku
-#  - update with no search terms
-#  - search "W-A Mozart live", don't press y
-#  - search "sardou" and make a multi-selection
 
 # leave empty if m detects it correctly
 readonly forced_music_path=""
 readonly music_player_exec="mpv --no-video"
-readonly script_version_nb="2017.06.10"
+readonly music_shuffle_arg="--shuffle"
+readonly script_version_nb="2017.06.16"
 
 # -------------------------- Do not edit from here -------------------------- #
 
@@ -70,6 +61,8 @@ Example:          ${m_script_name} radiohead creep
 
   -o              When multiple files match <SEARCH TERMS>, play first at once.
 
+  -s              Pass shuffle argument to player.
+
   -y              Force ${m_script_name} to ignore any local match.
                   Instead ${m_script_name} will search with youtube-dl,
                   download the first match to a temp file, play it
@@ -95,6 +88,7 @@ for var in "$@" ; do
         case ${var} in
             "-u" | "--update" ) update_index_f=1 ;;
             "-o" )              m_oneshot_mode=1 ;;
+            "-s" )              shuffle_player=1 ;;
             "-c" )              clear_yt_cache=1 ;;
             "-y" )              search_on_ytdl=1 ;;
             * )                 ext_with_msg "${m_usage_help_text}" ;;
@@ -124,6 +118,7 @@ test_bin_dep ${sentaku} || {
 
 # Check player dependency
 command_array=($music_player_exec)
+[[ "${shuffle_player}" ]] && command_array+=("${music_shuffle_arg}")
 test_bin_dep "${command_array[0]}" || \
     ext_with_msg "Consider editting $0 to set \$music_player_exec."
 
@@ -140,9 +135,12 @@ test_bin_dep "${command_array[0]}" || \
 
     # find "${path_to_music}" -mindepth 1 -printf "%P\n"
     # is faster, but -printf' flag is not portable on BSDs
-    find "${path_to_music}" -mindepth 1    \
-        | cut -c$((${#path_to_music}+2))-  \
-        | sort > "${music_db_file}"
+    var="$(find -L "${path_to_music}" -type d \
+        | cut -c$((${#path_to_music}+2))- | sed 's/$/\//' )"
+    var+=$'\n'
+    var+="$(find -L "${path_to_music}" -type f \
+        | cut -c$((${#path_to_music}+2))- )"
+    echo "$var" | sort > "${music_db_file}"
     echo "updated music index file"
     [[ "${#search_terms[@]}" -gt 0 ]] && exit
 }
