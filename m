@@ -89,6 +89,7 @@ for var in "$@" ; do
             "-u" | "--update" ) update_index_f=1 ;;
             "-o" )              m_oneshot_mode=1 ;;
             "-s" )              shuffle_player=1 ;;
+            "-a" )              m_all_mode=1 ;;
             "-c" )              clear_yt_cache=1 ;;
             "-y" )              search_on_ytdl=1 ;;
             * )                 ext_with_msg "${m_usage_help_text}" ;;
@@ -158,6 +159,10 @@ test_bin_dep "${command_array[0]}" || \
 
 for var in "${search_terms[@]}" ; do
     music_list=$( echo "${music_list}" | grep -i "${var}" )
+
+    # Choose only files in all mode to not repeat tracks 
+    [[ ${m_all_mode} ]] && \
+    music_list=$( echo "${music_list}" | fgrep -e . -e / )
 done
 
 # Found no local match. Searching downloaded temp files for matches
@@ -201,7 +206,7 @@ done
 
 # If there are multiple matches, allow user to make a selection
 # sentaku emacs-mode' filter-as-you-type is great but pressing 'q' won't quit.
-[[ "$( echo "${music_list}" | wc -l )" -gt 1 ]] && {
+[[ "$( echo "${music_list}" | wc -l )" -gt 1 ]] && [[ -z "$m_all_mode" ]] && {
     music_list="$( echo "${music_list}" | ${sentaku} -N -s $'\n' )"
     [[ -z "${music_list}" ]] && ext_with_msg "user interruption"
 }
