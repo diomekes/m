@@ -162,7 +162,7 @@ for var in "${search_terms[@]}" ; do
 
     # Choose only files in all mode to not repeat tracks 
     [[ ${m_all_mode} ]] && \
-    music_list=$( echo "${music_list}" | fgrep -e . -e / )
+    music_list=$( echo "${music_list}" | sed -e '/\./!d' -e '/\//!d' )
 done
 
 # Found no local match. Searching downloaded temp files for matches
@@ -206,7 +206,7 @@ done
 
 # If there are multiple matches, allow user to make a selection
 # sentaku emacs-mode' filter-as-you-type is great but pressing 'q' won't quit.
-[[ "$( echo "${music_list}" | wc -l )" -gt 1 ]] && [[ -z "$m_all_mode" ]] && {
+[[ -z "$m_all_mode" ]] && [[ "$( echo "${music_list}" | wc -l )" -gt 1 ]] && {
     music_list="$( echo "${music_list}" | ${sentaku} -N -s $'\n' )"
     [[ -z "${music_list}" ]] && ext_with_msg "user interruption"
 }
