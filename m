@@ -161,8 +161,7 @@ for var in "${search_terms[@]}" ; do
     music_list=$( echo "${music_list}" | grep -i "${var}" )
 
     # Choose only files in all mode to not repeat tracks 
-    [[ ${m_all_mode} ]] && \
-    music_list=$( echo "${music_list}" | sed -e '/\./!d' -e '/\//!d' )
+    [[ ${m_all_mode} ]] && music_list=$( echo "${music_list}" | grep -v "/$" )
 done
 
 # Found no local match. Searching downloaded temp files for matches
